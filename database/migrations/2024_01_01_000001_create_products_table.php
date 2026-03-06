@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->text('description');
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
-            $table->string('image_url');
+            $table->longText('image_url');
             $table->boolean('active')->default(true);
             $table->timestamps();
         });

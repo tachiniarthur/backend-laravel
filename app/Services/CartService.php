@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -23,26 +24,30 @@ class CartService
         return max(0, $product->stock - (int) $reservedByOthers);
     }
 
-    public function getItems(User $user)
+    public function getItems(User $user): Collection
     {
-        return $user->cartItems()->with('product')->get()->map(function (CartItem $item) use ($user) {
-            $availableStock = $this->availableStockForUser($item->product, $user);
+        return $user->cartItems()
+            ->with('product')
+            ->orderByDesc('quantity')
+            ->get()
+            ->map(function (CartItem $item) use ($user) {
+                $availableStock = $this->availableStockForUser($item->product, $user);
 
-            return [
-                'id' => $item->id,
-                'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
-                'product' => [
-                    'id' => $item->product->id,
-                    'name' => $item->product->name,
-                    'price' => $item->product->price,
-                    'image_url' => $item->product->image_url,
-                    'stock' => $item->product->stock,
-                    'available_stock' => $availableStock,
-                ],
-                'available_stock' => max(0, $availableStock - $item->quantity),
-            ];
-        });
+                return [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'product' => [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'price' => $item->product->price,
+                        'image_url' => $item->product->image_url,
+                        'stock' => $item->product->stock,
+                        'available_stock' => $availableStock,
+                    ],
+                    'available_stock' => max(0, $availableStock - $item->quantity),
+                ];
+            });
     }
 
     public function addItem(User $user, int $productId, int $quantity = 1): CartItem
@@ -78,6 +83,7 @@ class CartService
             if ($item) {
                 $item->quantity = $newQuantity;
                 $item->save();
+
                 return $item->load('product');
             }
 
@@ -103,6 +109,7 @@ class CartService
             }
 
             $item->update(['quantity' => max(1, $quantity)]);
+
             return $item->load('product');
         });
     }

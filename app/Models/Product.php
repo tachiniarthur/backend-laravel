@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -18,12 +19,12 @@ class Product extends Model
         'active' => 'boolean',
     ];
 
-    public function cartItems()
+    public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
 
-    public function orderItems()
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
@@ -35,7 +36,7 @@ class Product extends Model
 
     public function getReservedQuantityAttribute(): int
     {
-        return $this->cartItems()->sum('quantity');
+        return (int) $this->cartItems()->sum('quantity');
     }
 
     public function getAvailableStockAttribute(): int

@@ -22,8 +22,6 @@ class OrderService
                 'status' => 'pending',
             ]);
 
-            $total = 0;
-
             foreach ($items as $item) {
                 $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
@@ -45,19 +43,36 @@ class OrderService
                     'price' => $product->price,
                 ]);
 
-                $total += $product->price * $item['quantity'];
                 $product->decreaseStock($item['quantity']);
             }
 
-            // Limpar o carrinho do usuario apos pedido bem-sucedido
             $this->cartService->clear($user);
 
             return $order->load('items.product');
         });
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Order>
+     */
     public function listForUser(User $user)
     {
         return $user->orders()->with('items.product')->latest()->get();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Order>
+     */
+    public function listAll()
+    {
+        return Order::with(['items.product', 'user:id,name,email'])->latest()->get();
+    }
+
+    public function updateStatus(int $orderId, string $status): Order
+    {
+        $order = Order::findOrFail($orderId);
+        $order->update(['status' => $status]);
+
+        return $order->load(['items.product', 'user:id,name,email']);
     }
 }

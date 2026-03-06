@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AuthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -11,7 +12,7 @@ class AuthController extends Controller
         protected AuthService $authService
     ) {}
 
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -24,15 +25,20 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciais invalidas'], 401);
         }
 
-        $result['user']->makeHidden(['password']);
-
         return response()->json([
             'user' => $result['user'],
             'token' => $result['token'],
         ]);
     }
 
-    public function createAccount(Request $request)
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Logout realizado.']);
+    }
+
+    public function createAccount(Request $request): JsonResponse
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -47,8 +53,6 @@ class AuthController extends Controller
         if (!$result) {
             return response()->json(['message' => 'Erro ao criar conta'], 500);
         }
-
-        $result['user']->makeHidden(['password']);
 
         return response()->json([
             'message' => 'Conta criada com sucesso',

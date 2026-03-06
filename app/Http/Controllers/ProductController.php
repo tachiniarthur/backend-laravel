@@ -6,6 +6,7 @@ use App\Services\ProductService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -46,12 +47,15 @@ class ProductController extends Controller
             'description' => 'required|string|min:3',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'required|string',
+            'image' => 'required|image|max:10240',
             'active' => 'sometimes|boolean',
         ]);
 
         try {
-            $data['image_url'] = $data['image'];
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('products', 'public');
+                $data['image_url'] = url('storage/' . $path);
+            }
             unset($data['image']);
 
             $product = $this->productService->create($data, $request->user());
@@ -75,15 +79,22 @@ class ProductController extends Controller
             'description' => 'sometimes|string|min:3',
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
-            'image' => 'sometimes|string',
+            'image' => 'sometimes|image|max:10240',
             'active' => 'sometimes|boolean',
         ]);
 
         try {
-            if (isset($data['image'])) {
-                $data['image_url'] = $data['image'];
-                unset($data['image']);
+            if ($request->hasFile('image')) {
+                // Remove a imagem antiga se existir
+                if ($product->image_url) {
+                    $oldPath = str_replace(url('storage/'), '', $product->image_url);
+                    Storage::disk('public')->delete($oldPath);
+                }
+
+                $path = $request->file('image')->store('products', 'public');
+                $data['image_url'] = url('storage/' . $path);
             }
+            unset($data['image']);
 
             $product = $this->productService->update($product, $data, $request->user());
 
@@ -102,6 +113,12 @@ class ProductController extends Controller
         }
 
         try {
+            // Remove a imagem do produto ao deletar
+            if ($product->image_url) {
+                $oldPath = str_replace(url('storage/'), '', $product->image_url);
+                Storage::disk('public')->delete($oldPath);
+            }
+
             $this->productService->delete($product, $request->user());
 
             return response()->json(['message' => 'Produto removido.']);
