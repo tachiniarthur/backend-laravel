@@ -1,0 +1,206 @@
+# Plano de Implementação: Suite de Testes Unitários IA (TesteIA)
+
+## Visão Geral
+
+Implementação incremental da suite de testes `TesteIA` em PHP/Laravel com PHPUnit. Cada tarefa cria arquivos de teste específicos, começando pela infraestrutura base, passando por Models, Services, Controllers e Commands, e finalizando com integração no PHPUnit.
+
+## Tarefas
+
+- [ ]   1. Configurar infraestrutura base da suite TesteIA
+    - [ ] 1.1 Registrar a testsuite `TesteIA` no `phpunit.xml` apontando para `tests/TesteIA`
+        - Adicionar `<testsuite name="TesteIA"><directory>tests/TesteIA</directory></testsuite>` dentro de `<testsuites>`
+        - _Requisitos: 1.4, 1.5_
+    - [ ] 1.2 Criar a classe base `TesteIATestCase` em `tests/TesteIA/TesteIATestCase.php`
+        - Estender `Tests\TestCase`, usar trait `RefreshDatabase`
+        - Implementar helpers `createAdminUser(array $overrides = [])` e `createRegularUser(array $overrides = [])`
+        - Usar `UserFactory` com `is_admin` configurado adequadamente
+        - _Requisitos: 1.1, 1.2, 1.3, 12.2, 12.3_
+
+- [ ]   2. Implementar testes de Models
+    - [ ] 2.1 Criar `tests/TesteIA/Models/UserModelTest.php`
+        - Testar relacionamentos `orders` e `cartItems`
+        - Testar atributos `fillable` com mass assignment
+        - Testar casts: `password` como `hashed`, `is_admin` como `boolean`
+        - Testar atributos `hidden` (`password`, `remember_token`) não aparecem na serialização
+        - _Requisitos: 2.1, 2.2, 2.3, 2.9_
+    - [ ] 2.2 Criar `tests/TesteIA/Models/ProductModelTest.php`
+        - Testar relacionamentos `cartItems` e `orderItems`
+        - Testar atributos `fillable` e casts (`price` decimal:2, `stock` integer, `active` boolean)
+        - Testar scope `scopeActive` retornando apenas produtos com `active = true`
+        - Testar accessor `reserved_quantity` (soma de CartItems)
+        - Testar accessor `available_stock` (`max(0, stock - reserved_quantity)`)
+        - Testar método `decreaseStock`
+        - _Requisitos: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
+    - [ ]\* 2.3 Escrever teste de propriedade para scope active do Product
+        - **Propriedade 3: Scope active filtra apenas produtos ativos**
+        - **Valida: Requisitos 2.4, 6.1**
+    - [ ]\* 2.4 Escrever teste de propriedade para estoque disponível do Product
+        - **Propriedade 4: Estoque disponível é calculado corretamente**
+        - **Valida: Requisitos 2.5, 2.6**
+    - [ ]\* 2.5 Escrever teste de propriedade para decreaseStock
+        - **Propriedade 5: decreaseStock decrementa o estoque corretamente**
+        - **Valida: Requisitos 2.7**
+    - [ ] 2.6 Criar `tests/TesteIA/Models/OrderModelTest.php`
+        - Testar relacionamentos `user` e `items`
+        - Testar atributos `fillable`
+        - Testar accessor `total` (soma de `price * quantity` dos OrderItems)
+        - _Requisitos: 2.1, 2.2, 2.8_
+    - [ ]\* 2.7 Escrever teste de propriedade para total do pedido
+        - **Propriedade 6: Total do pedido é a soma dos itens**
+        - **Valida: Requisitos 2.8**
+    - [ ] 2.8 Criar `tests/TesteIA/Models/OrderItemModelTest.php`
+        - Testar relacionamentos `order` e `product`
+        - Testar atributos `fillable` e casts (`price` decimal:2, `quantity` integer)
+        - _Requisitos: 2.1, 2.2, 2.3_
+    - [ ] 2.9 Criar `tests/TesteIA/Models/CartItemModelTest.php`
+        - Testar relacionamentos `user` e `product`
+        - Testar atributos `fillable` e casts (`quantity` integer)
+        - _Requisitos: 2.1, 2.2, 2.3_
+    - [ ]\* 2.10 Escrever testes de propriedade para configuração de atributos dos Models
+        - **Propriedade 1: Relacionamentos de Models retornam registros corretos**
+        - **Propriedade 2: Configuração de atributos dos Models é consistente**
+        - **Valida: Requisitos 2.1, 2.2, 2.3, 2.9**
+
+- [ ]   3. Checkpoint — Verificar testes de Models
+    - Executar `php artisan test --testsuite=TesteIA` e garantir que todos os testes de Models passam. Perguntar ao usuário se há dúvidas.
+
+- [ ]   4. Implementar testes de Services
+    - [ ] 4.1 Criar `tests/TesteIA/Services/AuthServiceTest.php`
+        - Testar `login` com credenciais válidas retornando user + token
+        - Testar `login` com email inexistente retornando null
+        - Testar `login` com senha incorreta retornando null
+        - Testar `create` com dados válidos criando usuário e retornando user + token
+        - Testar `create` com campos opcionais ausentes (`username`, `phone`) como null
+        - Testar que senha é armazenada como hash
+        - _Requisitos: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+    - [ ]\* 4.2 Escrever testes de propriedade para AuthService
+        - **Propriedade 7: Login com credenciais válidas retorna usuário e token**
+        - **Propriedade 8: Login com credenciais inválidas retorna null**
+        - **Propriedade 9: Criação de conta persiste usuário com senha hash**
+        - **Valida: Requisitos 3.1, 3.2, 3.3, 3.4, 3.6**
+    - [ ] 4.3 Criar `tests/TesteIA/Services/CartServiceTest.php`
+        - Testar `availableStockForUser` subtraindo reservas de outros usuários
+        - Testar `getItems` retornando itens com dados do produto e `available_stock`
+        - Testar `addItem` criando novo CartItem com produto ativo e estoque disponível
+        - Testar `addItem` incrementando quantidade de item existente
+        - Testar `addItem` lançando `ValidationException` para produto inativo
+        - Testar `addItem` lançando `ValidationException` para estoque zero
+        - Testar `addItem` lançando `ValidationException` para quantidade excedendo estoque
+        - Testar `updateItem` atualizando quantidade com `max(1, quantity)`
+        - Testar `updateItem` lançando `ValidationException` para quantidade excedendo estoque
+        - Testar `removeItem` removendo item específico
+        - Testar `clear` removendo todos os itens
+        - _Requisitos: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12_
+    - [ ]\* 4.4 Escrever testes de propriedade para CartService
+        - **Propriedade 10: Estoque disponível para usuário exclui reservas de outros**
+        - **Propriedade 11: getItems retorna itens do carrinho com dados calculados**
+        - **Propriedade 12: addItem cria ou incrementa item no carrinho**
+        - **Propriedade 13: addItem rejeita produtos indisponíveis ou sem estoque**
+        - **Propriedade 14: updateItem atualiza quantidade com mínimo de 1**
+        - **Propriedade 15: removeItem e clear removem itens do carrinho**
+        - **Valida: Requisitos 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12**
+    - [ ] 4.5 Criar `tests/TesteIA/Services/OrderServiceTest.php`
+        - Testar `createFromCart` criando pedido com status `pending`, OrderItems corretos, decrementando estoque e limpando carrinho
+        - Testar `createFromCart` lançando `ValidationException` para produto inativo
+        - Testar `createFromCart` lançando `ValidationException` para estoque insuficiente
+        - Testar `listForUser` retornando pedidos do usuário ordenados do mais recente ao mais antigo
+        - Testar `listAll` retornando todos os pedidos com relacionamentos carregados
+        - Testar `updateStatus` atualizando status e retornando pedido com relacionamentos
+        - _Requisitos: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
+    - [ ]\* 4.6 Escrever testes de propriedade para OrderService
+        - **Propriedade 16: createFromCart cria pedido completo e atualiza estoque**
+        - **Propriedade 17: createFromCart rejeita itens com produto inativo ou estoque insuficiente**
+        - **Propriedade 18: Listagem de pedidos retorna resultados ordenados cronologicamente**
+        - **Propriedade 19: updateStatus atualiza o status do pedido**
+        - **Valida: Requisitos 5.1, 5.2, 5.3, 5.4, 5.5, 5.6**
+    - [ ] 4.7 Criar `tests/TesteIA/Services/ProductServiceTest.php`
+        - Testar `list` retornando apenas produtos ativos
+        - Testar `find` retornando produto ou null
+        - Testar `create` com admin (sucesso), não-admin (`AuthorizationException`), sem actor (sucesso)
+        - Testar `update` com admin (sucesso) e não-admin (`AuthorizationException`)
+        - Testar `delete` com admin (sucesso) e não-admin (`AuthorizationException`)
+        - _Requisitos: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9_
+    - [ ]\* 4.8 Escrever testes de propriedade para ProductService
+        - **Propriedade 20: ProductService.find retorna produto ou null**
+        - **Propriedade 21: Operações admin-only de ProductService verificam autorização**
+        - **Valida: Requisitos 6.2, 6.3, 6.4, 6.6, 6.7, 6.8, 6.9**
+
+- [ ]   5. Checkpoint — Verificar testes de Services
+    - Executar `php artisan test --testsuite=TesteIA` e garantir que todos os testes de Models e Services passam. Perguntar ao usuário se há dúvidas.
+
+- [ ]   6. Implementar testes de Controllers
+    - [ ] 6.1 Criar `tests/TesteIA/Controllers/AuthControllerTest.php`
+        - Testar POST `/api/login` com credenciais válidas (200), inválidas (401) e dados faltando (422)
+        - Testar POST `/api/create-account` com dados válidos (201), email duplicado (422), username duplicado (422), senha sem confirmação (422)
+        - Testar POST `/api/logout` autenticado (200) com token invalidado
+        - _Requisitos: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8_
+    - [ ]\* 6.2 Escrever testes de propriedade para AuthController
+        - **Propriedade 22: Endpoints de autenticação retornam status HTTP corretos**
+        - **Propriedade 23: Validação de unicidade rejeita duplicatas**
+        - **Valida: Requisitos 7.1, 7.2, 7.4, 7.5, 7.6, 7.8**
+    - [ ] 6.3 Criar `tests/TesteIA/Controllers/CartControllerTest.php`
+        - Testar GET `/api/cart` autenticado (200) e não autenticado (401)
+        - Testar POST `/api/cart` com dados válidos (200), product_id inexistente (422), erro de estoque (422)
+        - Testar PUT `/api/cart/{id}` com quantidade válida (200) e excedendo estoque (422)
+        - Testar DELETE `/api/cart/{id}` (200) com item removido
+        - _Requisitos: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
+    - [ ]\* 6.4 Escrever testes de propriedade para CartController
+        - **Propriedade 24: Endpoints do carrinho retornam status HTTP corretos para operações válidas**
+        - **Propriedade 25: Endpoints do carrinho propagam erros de validação como 422**
+        - **Valida: Requisitos 8.1, 8.3, 8.5, 8.6, 8.7, 8.8**
+    - [ ] 6.5 Criar `tests/TesteIA/Controllers/OrderControllerTest.php`
+        - Testar POST `/api/orders` com itens válidos (201), dados inválidos (422), erro de estoque (422)
+        - Testar GET `/api/orders` autenticado (200) com pedidos do usuário
+        - Testar GET `/api/admin/orders` como admin (200) e não-admin (403)
+        - Testar PATCH `/api/admin/orders/{id}/status` como admin com status válido (200), não-admin (403), status inválido (422)
+        - _Requisitos: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
+    - [ ]\* 6.6 Escrever testes de propriedade para OrderController
+        - **Propriedade 26: Endpoints de pedidos retornam status HTTP corretos**
+        - **Propriedade 27: Endpoints admin de pedidos verificam autorização**
+        - **Valida: Requisitos 9.1, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8**
+    - [ ] 6.7 Criar `tests/TesteIA/Controllers/ProductControllerTest.php`
+        - Testar GET `/api/products` (200) com lista de produtos ativos incluindo `available_stock`
+        - Testar GET `/api/products/{id}` existente (200) e inexistente (404)
+        - Testar POST `/api/products` como admin com dados válidos e imagem (201), não-admin (403), dados inválidos (422)
+        - Testar POST `/api/products/{id}` como admin atualizando produto (200) e substituindo imagem no storage
+        - Testar DELETE `/api/products/{id}` como admin (200) removendo produto e imagem, não-admin (403)
+        - Usar `Storage::fake('public')` para testes de upload de imagem
+        - _Requisitos: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10_
+    - [ ]\* 6.8 Escrever testes de propriedade para ProductController
+        - **Propriedade 28: Endpoints de produtos retornam dados com available_stock**
+        - **Propriedade 29: CRUD de produtos via API verifica autorização admin**
+        - **Propriedade 30: Upload de imagem é gerenciado corretamente no ciclo de vida do produto**
+        - **Valida: Requisitos 10.1, 10.2, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9**
+    - [ ] 6.9 Criar `tests/TesteIA/Controllers/UserControllerTest.php`
+        - Testar GET `/api/user` autenticado (200) e não autenticado (401)
+        - Testar PUT `/api/user` com dados válidos (200) e nome curto (422)
+        - _Requisitos: 11.1, 11.2, 11.3, 11.4_
+    - [ ]\* 6.10 Escrever testes de propriedade para UserController
+        - **Propriedade 31: Endpoints de perfil do usuário retornam status corretos**
+        - **Valida: Requisitos 11.1, 11.3**
+
+- [ ]   7. Checkpoint — Verificar testes de Controllers
+    - Executar `php artisan test --testsuite=TesteIA` e garantir que todos os testes de Models, Services e Controllers passam. Perguntar ao usuário se há dúvidas.
+
+- [ ]   8. Implementar testes de Commands e finalizar
+    - [ ] 8.1 Criar `tests/TesteIA/Commands/TestMetricsCommandTest.php`
+        - Testar execução do comando `test:metrics` com opção `--testsuite=TesteIA`
+        - Testar que o comando é compatível com a `MetricsExtension`
+        - _Requisitos: 14.1, 14.2_
+    - [ ]\* 8.2 Escrever testes unitários para edge cases gerais
+        - Testar valores limítrofes: quantidade 0, estoque 0, strings vazias, campos opcionais nulos
+        - _Requisitos: 13.4_
+
+- [ ]   9. Checkpoint final — Verificar suite completa
+    - Executar `php artisan test --testsuite=TesteIA` e garantir que todos os testes passam.
+    - Verificar que a suite é compatível com `php artisan test:metrics --testsuite=TesteIA`.
+    - Perguntar ao usuário se há dúvidas.
+
+## Notas
+
+- Tarefas marcadas com `*` são opcionais e podem ser puladas para um MVP mais rápido
+- Cada tarefa referencia requisitos específicos para rastreabilidade
+- Checkpoints garantem validação incremental
+- Testes de propriedade usam `@dataProvider` com 100+ iterações cada
+- Testes unitários validam exemplos específicos e edge cases
+- Todos os testes seguem o padrão Arrange-Act-Assert e convenção `test_<ação>_<cenário>_<resultado>`

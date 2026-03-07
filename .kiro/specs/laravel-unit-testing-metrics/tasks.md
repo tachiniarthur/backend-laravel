@@ -6,8 +6,8 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
 
 ## Tarefas
 
-- [-] 1. Criar modelos de dados e estruturas base
-    - [ ] 1.1 Criar as classes `ResourceSnapshot`, `ResourceDiff` e `TestMetric`
+- [x]   1. Criar modelos de dados e estruturas base
+    - [x] 1.1 Criar as classes `ResourceSnapshot`, `ResourceDiff` e `TestMetric`
         - Criar `app/Testing/Metrics/ResourceSnapshot.php` com propriedades readonly: wallTime, userCpuTime, systemCpuTime, peakMemoryBytes
         - Criar `app/Testing/Metrics/ResourceDiff.php` com propriedades readonly: wallTimeDelta, userCpuTimeDelta, systemCpuTimeDelta, peakMemoryDelta
         - Criar `app/Testing/Metrics/TestMetric.php` com todas as propriedades do design (testClass, testMethod, testName, status, wallTime, userCpuTime, systemCpuTime, peakMemoryBytes, coveragePercent, linesExecuted, linesTotal, executedAt) e método `toArray()`
@@ -17,8 +17,8 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Gerar 100+ TestMetrics aleatórios e verificar: wallTime >= 0, userCpuTime >= 0, systemCpuTime >= 0, peakMemoryBytes > 0, status válido, toArray() contém todas as chaves obrigatórias
         - **Valida: Requisitos 1.2, 1.3, 4.2**
 
-- [ ]   2. Implementar MetricsResultCollection e MetricsStore
-    - [ ] 2.1 Criar `MetricsResultCollection`
+- [x]   2. Implementar MetricsResultCollection e MetricsStore
+    - [x] 2.1 Criar `MetricsResultCollection`
         - Criar `app/Testing/Metrics/MetricsResultCollection.php` com métodos: count(), totalWallTime(), averageWallTime(), totalMemoryPeak(), averageCoverage(), groupByClass(), sortByWallTime(), toArray()
         - Implementar lógica de agregação matemática correta
         - _Requisitos: 1.4, 6.2_
@@ -30,7 +30,7 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - **Propriedade 9: Unicidade de identificadores para pareamento Wilcoxon**
         - Verificar que todos os testName são únicos dentro da coleção
         - **Valida: Requisitos 6.2**
-    - [ ] 2.4 Criar `MetricsStore`
+    - [x] 2.4 Criar `MetricsStore`
         - Criar `app/Testing/Metrics/MetricsStore.php` com métodos: add(), all(), toArray(), toJson(), fromJson()
         - Implementar serialização/deserialização JSON com estrutura metadata, metrics e summary
         - _Requisitos: 4.5, 6.1, 6.2_
@@ -39,11 +39,11 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Gerar MetricsStore com métricas aleatórias, serializar via toJson() e deserializar via fromJson(), verificar equivalência
         - **Valida: Requisitos 4.5, 6.1**
 
-- [ ]   3. Checkpoint - Verificar modelos de dados
+- [x]   3. Checkpoint - Verificar modelos de dados
     - Garantir que todos os testes passam, perguntar ao usuário se houver dúvidas.
 
-- [ ]   4. Implementar ResourceMonitor e CoverageCollector
-    - [ ] 4.1 Criar `ResourceMonitor`
+- [x]   4. Implementar ResourceMonitor e CoverageCollector
+    - [x] 4.1 Criar `ResourceMonitor`
         - Criar `app/Testing/Metrics/ResourceMonitor.php` com métodos: snapshot() e diff()
         - Usar `getrusage()` para CPU e `memory_get_peak_usage()` para memória
         - Implementar fallback com `microtime(true)` quando `getrusage()` não estiver disponível
@@ -52,7 +52,7 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - **Propriedade 8: Corretude do diff de recursos**
         - Gerar pares de ResourceSnapshots aleatórios e verificar: wallTimeDelta == after.wallTime - before.wallTime, userCpuTimeDelta == after.userCpuTime - before.userCpuTime, systemCpuTimeDelta == after.systemCpuTime - before.systemCpuTime
         - **Valida: Requisitos 3.4**
-    - [ ] 4.3 Criar `CoverageCollector`
+    - [x] 4.3 Criar `CoverageCollector`
         - Criar `app/Testing/Metrics/CoverageCollector.php` com métodos: isAvailable(), getDriver(), startCoverage(), stopCoverage()
         - Criar `app/Testing/Metrics/CoverageResult.php` com propriedades: testName, linesExecuted, linesTotal, coveragePercentage, filesCovered
         - Detectar automaticamente Xdebug ou PCOV; exibir mensagem de erro se nenhum estiver disponível
@@ -66,12 +66,12 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Verificar que getDriver() retorna 'xdebug', 'pcov' ou 'none'; quando isAvailable() == true, getDriver() != 'none'
         - **Valida: Requisitos 2.4**
 
-- [ ]   5. Implementar MetricsCollector e extensão PHPUnit
-    - [ ] 5.1 Criar `MetricsCollector`
+- [x]   5. Implementar MetricsCollector e extensão PHPUnit
+    - [x] 5.1 Criar `MetricsCollector`
         - Criar `app/Testing/Metrics/MetricsCollector.php` com métodos: recordTestStart(), recordTestEnd(), getResults()
         - Orquestrar ResourceMonitor e CoverageCollector para coletar métricas de cada teste
         - _Requisitos: 1.1, 1.2, 1.3, 3.1, 3.2, 3.3_
-    - [ ] 5.2 Criar `MetricsExtension` e subscribers PHPUnit
+    - [x] 5.2 Criar `MetricsExtension` e subscribers PHPUnit
         - Criar `app/Testing/Metrics/MetricsExtension.php` implementando `PHPUnit\Runner\Extension\Extension`
         - Criar `app/Testing/Metrics/TestPreparedSubscriber.php` implementando `PHPUnit\Event\Test\PreparedSubscriber`
         - Criar `app/Testing/Metrics/TestFinishedSubscriber.php` implementando `PHPUnit\Event\Test\FinishedSubscriber`
@@ -83,11 +83,11 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Verificar que a extensão não altera o resultado dos testes (passed/failed/skipped permanece idêntico)
         - **Valida: Requisitos 5.1**
 
-- [ ]   6. Checkpoint - Verificar coleta de métricas
+- [x]   6. Checkpoint - Verificar coleta de métricas
     - Garantir que todos os testes passam, perguntar ao usuário se houver dúvidas.
 
-- [ ]   7. Implementar geração de relatório PDF
-    - [ ] 7.1 Criar `ReportGenerator`
+- [x]   7. Implementar geração de relatório PDF
+    - [x] 7.1 Criar `ReportGenerator`
         - Criar `app/Testing/Metrics/ReportGenerator.php` com métodos: generatePdf(), generateHtml(), generateArray()
         - Utilizar `barryvdh/laravel-dompdf` para geração do PDF
         - Gerar HTML intermediário com tabelas de métricas por teste, cobertura por arquivo, recursos por teste e resumo
@@ -95,11 +95,11 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Formatar valores de tempo com 2 casas decimais em ms e memória com 2 casas decimais em MB
         - Gerar PDF com mensagem "Nenhum teste executado" quando coleção estiver vazia
         - _Requisitos: 4.1, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3, 6.4, 6.5_
-    - [ ] 7.2 Criar template Blade para o relatório
+    - [x] 7.2 Criar template Blade para o relatório
         - Criar `resources/views/metrics/report.blade.php` com layout das tabelas e formatação
         - Incluir seções: cabeçalho, resumo, tabela de métricas por teste, tabela resumo por classe, dados para Wilcoxon
         - _Requisitos: 4.2, 4.3, 4.4, 4.5, 6.1, 6.3, 6.4_
-    - [ ] 7.3 Criar exceção `ReportGenerationException`
+    - [x] 7.3 Criar exceção `ReportGenerationException`
         - Criar `app/Testing/Metrics/Exceptions/ReportGenerationException.php`
         - _Requisitos: 4.1_
     - [ ]\* 7.4 Escrever teste de propriedade para conteúdo do relatório
@@ -107,8 +107,8 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Gerar conjuntos aleatórios de TestMetrics e verificar que o HTML gerado contém: nome de cada teste, valores de tempo e memória, seções de cabeçalho, resumo e tabela
         - **Valida: Requisitos 4.2, 4.3, 4.4**
 
-- [ ]   8. Implementar comando Artisan e integração final
-    - [ ] 8.1 Criar comando `TestMetricsCommand`
+- [x]   8. Implementar comando Artisan e integração final
+    - [x] 8.1 Criar comando `TestMetricsCommand`
         - Criar `app/Console/Commands/TestMetricsCommand.php` com signature `test:metrics` e opções: --filter, --coverage, --output, --json
         - Configurar extensão PHPUnit programaticamente e executar testes
         - Acionar ReportGenerator após execução dos testes
@@ -116,7 +116,7 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Salvar PDF em `storage/app/reports`, criando diretório recursivamente se necessário
         - Exportar JSON quando opção --json for utilizada
         - _Requisitos: 4.6, 4.7, 5.2, 5.3, 5.4_
-    - [ ] 8.2 Criar exceção `InvalidMetricsDataException`
+    - [x] 8.2 Criar exceção `InvalidMetricsDataException`
         - Criar `app/Testing/Metrics/Exceptions/InvalidMetricsDataException.php` para erros de deserialização JSON
         - _Requisitos: 4.5_
     - [ ]\* 8.3 Escrever testes unitários para o comando Artisan
@@ -125,7 +125,7 @@ Implementação incremental do sistema de coleta de métricas de testes unitári
         - Testar tratamento de erros (diretório sem permissão, driver de cobertura indisponível)
         - _Requisitos: 5.2, 5.3, 5.4_
 
-- [ ]   9. Checkpoint final - Verificar integração completa
+- [x]   9. Checkpoint final - Verificar integração completa
     - Garantir que todos os testes passam, perguntar ao usuário se houver dúvidas.
 
 ## Notas

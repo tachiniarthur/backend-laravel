@@ -11,7 +11,13 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <testsuite name="JuniorPleno">
+            <directory>tests/JuniorPlenoTests</directory>
+        </testsuite>
     </testsuites>
+    <extensions>
+        <bootstrap class="App\Testing\Metrics\MetricsExtension"/>
+    </extensions>
     <source>
         <include>
             <directory>app</directory>
