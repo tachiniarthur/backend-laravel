@@ -14,6 +14,9 @@
         <testsuite name="JuniorPleno">
             <directory>tests/JuniorPlenoTests</directory>
         </testsuite>
+        <testsuite name="TesteIA">
+            <directory>tests/TesteIA</directory>
+        </testsuite>
     </testsuites>
     <extensions>
         <bootstrap class="App\Testing\Metrics\MetricsExtension"/>
