@@ -85,10 +85,77 @@ class ReportGenerator
                 : '-',
         ];
 
+        $moduleCoverage = $this->computeModuleCoverage($data['metrics']);
+
         return [
             'metrics' => $metrics,
             'summary' => $summary,
+            'module_coverage' => $moduleCoverage,
             'is_empty' => empty($data['metrics']),
         ];
+    }
+
+    /**
+     * Group test metrics by business domain module and compute average coverage per module.
+     *
+     * @param array $metrics Raw metrics array
+     * @return array<string, array{tests: int, avg_coverage: string, avg_time_ms: string}>
+     */
+    private function computeModuleCoverage(array $metrics): array
+    {
+        $moduleKeywords = [
+            'auth' => ['auth', 'login', 'logout', 'register', 'password'],
+            'user' => ['user', 'profile', 'account'],
+            'product' => ['product'],
+            'cart' => ['cart'],
+            'order' => ['order'],
+            'admin' => ['admin'],
+        ];
+
+        $moduleData = [];
+
+        foreach ($metrics as $metric) {
+            $testClass = strtolower($metric['test_class'] ?? '');
+            $testMethod = strtolower($metric['test_method'] ?? '');
+            $combined = $testClass . ' ' . $testMethod;
+
+            $assigned = 'outros';
+            foreach ($moduleKeywords as $module => $keywords) {
+                foreach ($keywords as $kw) {
+                    if (str_contains($combined, $kw)) {
+                        $assigned = $module;
+                        break 2;
+                    }
+                }
+            }
+
+            if (!isset($moduleData[$assigned])) {
+                $moduleData[$assigned] = ['tests' => 0, 'coverage_sum' => 0.0, 'coverage_count' => 0, 'time_sum' => 0.0];
+            }
+
+            $moduleData[$assigned]['tests']++;
+            $moduleData[$assigned]['time_sum'] += (float) $metric['wall_time_ms'];
+
+            if ($metric['coverage_percent'] !== null) {
+                $moduleData[$assigned]['coverage_sum'] += (float) $metric['coverage_percent'];
+                $moduleData[$assigned]['coverage_count']++;
+            }
+        }
+
+        ksort($moduleData);
+
+        $result = [];
+        foreach ($moduleData as $module => $data) {
+            $avgCoverage = $data['coverage_count'] > 0
+                ? number_format($data['coverage_sum'] / $data['coverage_count'], 2) . '%'
+                : '-';
+            $result[$module] = [
+                'tests' => $data['tests'],
+                'avg_coverage' => $avgCoverage,
+                'avg_time_ms' => number_format($data['time_sum'] / max(1, $data['tests']), 2),
+            ];
+        }
+
+        return $result;
     }
 }

@@ -130,6 +130,26 @@
             </tr>
         </table>
 
+        @if(!empty($formatted['module_coverage']))
+            <h2>Cobertura por Módulo</h2>
+            <table>
+                <tr>
+                    <th>Módulo</th>
+                    <th>Testes</th>
+                    <th>Cobertura Média (%)</th>
+                    <th>Tempo Médio (ms)</th>
+                </tr>
+                @foreach($formatted['module_coverage'] as $module => $info)
+                    <tr>
+                        <td>{{ ucfirst($module) }}</td>
+                        <td>{{ $info['tests'] }}</td>
+                        <td>{{ $info['avg_coverage'] }}</td>
+                        <td>{{ $info['avg_time_ms'] }}</td>
+                    </tr>
+                @endforeach
+            </table>
+        @endif
+
         <h2>Métricas por Teste</h2>
         <table class="metrics-table">
             <colgroup>

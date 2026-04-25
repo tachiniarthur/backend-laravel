@@ -65,7 +65,33 @@ class TestMetricsCommand extends Command
             return $output;
         }
 
-        return storage_path('app/reports/metricas-testes-' . date('Y-m-d-His') . '.pdf');
+        $suiteName = $this->resolveSuiteName();
+        $today = date('Y-m-d');
+        $dir = storage_path('app/reports');
+
+        $this->ensureDirectoryExists($dir);
+
+        // Count existing reports for this suite+date to determine run number
+        $pattern = $dir . DIRECTORY_SEPARATOR . "relatorio_{$suiteName}_{$today}_*.pdf";
+        $existing = glob($pattern);
+        $runNumber = count($existing) + 1;
+
+        return $dir . DIRECTORY_SEPARATOR . "relatorio_{$suiteName}_{$today}_{$runNumber}.pdf";
+    }
+
+    private function resolveSuiteName(): string
+    {
+        if ($this->option('all')) {
+            return 'all';
+        }
+
+        $testsuite = $this->option('testsuite') ?? 'JuniorPleno';
+
+        return match (strtolower($testsuite)) {
+            'juniorpleno', 'junior' => 'junior',
+            'testeia', 'ia' => 'ia',
+            default => strtolower($testsuite),
+        };
     }
 
     private function ensureDirectoryExists(string $directory): bool
